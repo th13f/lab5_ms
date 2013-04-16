@@ -195,6 +195,51 @@ static ssize_t device_write(struct file *filp, const char *buff, size_t len, lof
         return buf_size;
 }
 
+/* Module init function */
+static int __init calc_init(void)
+{
+        int i = 0;
+
+        printk(KERN_INFO "Calc driver was loaded.\n");
+
+        classes = (struct class**) kmalloc(sizeof(struct class*) * 4, GFP_KERNEL);
+        c_dev = (struct cdev*) kmalloc(sizeof(struct cdev) * 4, GFP_KERNEL);
+        devices_buffer = (char**) kmalloc(sizeof(char*) * 4, GFP_KERNEL);
+
+        for (i = 0; i < 4; i++) {
+                devices_buffer[i] = (char*) kmalloc(sizeof(char) * FILE_MAX_SIZE, GFP_KERNEL);
+                devices_buffer[i][0] = '\0';
+        }
+
+        for (i = 0; i < 4; i++) {
+                if (alloc_chrdev_region(&numbers[i], 0, 1, names[i]) < 0) {
+                        return -1;
+                }
+
+                if ((classes[i] = class_create(THIS_MODULE, names[i])) == NULL) {
+                        unregister_chrdev_region(numbers[i], 1);
+                        return -1;
+                }
+
+                if (device_create(classes[i], NULL, numbers[i], NULL, names[i]) == NULL) {
+                        class_destroy(classes[i]);
+                        unregister_chrdev_region(numbers[i], 1);
+                        return -1;
+                }
+
+                cdev_init(&c_dev[i], &fops);
+
+                if (cdev_add(&c_dev[i], numbers[i], 1) == -1) {
+                        device_destroy(classes[i], numbers[i]);
+                        class_destroy(classes[i]);
+                        unregister_chrdev_region(numbers[i], 1);
+                        return -1;
+                }
+        }
+
+        printk(KERN_INFO "Calc driver devices were created.\n");
+        return 0;
+}
 
 module_init(calc_init); /* Register module entry point */
 module_exit(calc_exit); /* Register module cleaning up */
