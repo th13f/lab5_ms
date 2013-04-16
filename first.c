@@ -65,5 +65,17 @@ static struct cdev* c_dev;
 static struct class** classes;
 
 
+static int device_open(struct inode *inode, struct file *file)
+{
+        if (device_opened)
+                return -EBUSY;
+
+        device_opened++;
+        try_module_get(THIS_MODULE);
+
+        return 0;
+}
+
+
 module_init(calc_init); /* Register module entry point */
 module_exit(calc_exit); /* Register module cleaning up */
