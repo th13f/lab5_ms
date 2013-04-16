@@ -241,5 +241,24 @@ static int __init calc_init(void)
         return 0;
 }
 
+/* Module exit function */
+static void __exit calc_exit(void)
+{
+        int i;
+
+        for (i = 0; i < 4; i++) {
+                cdev_del(&c_dev[i]);
+                device_destroy(classes[i], numbers[i]);
+                class_destroy(classes[i]);
+                unregister_chrdev_region(numbers[i], 1);
+                kfree(devices_buffer[i]);
+        }
+
+        kfree(devices_buffer);
+
+        printk(KERN_INFO "Calc driver devices were removed.\n");
+        printk(KERN_INFO "Calc driver was unloaded.\n");
+}
+
 module_init(calc_init); /* Register module entry point */
 module_exit(calc_exit); /* Register module cleaning up */
