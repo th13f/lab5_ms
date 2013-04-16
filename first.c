@@ -87,5 +87,71 @@ static int device_release(struct inode *inode, struct file *file)
 }
 
 
+static ssize_t device_read( struct file *filp, char *buffer, size_t length, loff_t * offset)
+{
+        static int fin = 0;
+        long a, b, result = 0;
+        char name[32], op = 0, *end;
+        int written = 0;
+        int i = 0;
+
+        if (fin) {
+                fin = 0;
+                return 0;
+        }
+
+        strcpy(name, filp->f_dentry->d_name.name);
+
+        if (strcmp(name, CALC_FIRST) == 0) {
+                sprintf(message, "\n%s\n", devices_buffer[0]);
+        } else if (strcmp(name, CALC_SECOND) == 0) {
+                sprintf(message, "\n%s\n", devices_buffer[1]);
+        } else if (strcmp(name, CALC_OPERAND) == 0) {
+                sprintf(message, "\n%s\n", devices_buffer[2]);
+        } else {
+                a = simple_strtol(devices_buffer[0], &end, 10);
+                if (a == 0 && (*end == devices_buffer[0][0])) {
+                        sprintf(message, "\n%s\n", "First operand is not integer.");
+                } else {
+                        b = simple_strtol(devices_buffer[1], &end, 10);
+                        if (b == 0 && (*end == devices_buffer[1][0])) {
+                                sprintf(message, "\n%s\n", "Second operand is not integer.");
+                        } else {
+                                op = devices_buffer[2][0];
+                                switch (op) {
+                                        case '+': result = a + b; break;
+                                        case '-': result = a - b; break;
+                                        case 'x': result = a * b; break;
+                                        case '/':
+                                                if (b == 0) {
+                                                        sprintf(message, "\n%s\n",
+                                                                "Division by zero!");
+                                                        written = 1;
+                                                        break;
+                                                }
+                                                result = a / b;
+                                                break;
+                                        default:
+                                                sprintf(message, "\nUnknown operand: %c\n", op);
+                                                written = 1;
+                                                break;
+                                }
+                        }
+                        if (!written) {
+                                sprintf(message, "\n%ld %c %ld = %ld\n", a, op, b, result);
+                        }
+                }
+        }
+
+        for(i = 0; i < length && message[i]; i++) {
+                put_user(message[i], buffer + i);
+        }
+
+        fin = 1;
+
+        return i;
+}
+
+
 module_init(calc_init); /* Register module entry point */
 module_exit(calc_exit); /* Register module cleaning up */
