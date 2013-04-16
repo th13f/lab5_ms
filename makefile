@@ -1,4 +1,4 @@
-obj-m += my_calc.o
+obj-m += first.o
 
 KDIR := /lib/modules/$(shell uname -r)/build
 PWD  := $(shell pwd)
