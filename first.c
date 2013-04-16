@@ -46,6 +46,7 @@ static char** devices_buffer;
 /* User message. */
 static char message[32];
 
+
 /* Device operations struct. */
 static struct file_operations fops = {
         .owner = THIS_MODULE,
@@ -76,7 +77,7 @@ static int device_open(struct inode *inode, struct file *file)
         return 0;
 }
 
-
+/*module release function*/
 static int device_release(struct inode *inode, struct file *file)
 {
         device_opened--;
@@ -86,7 +87,7 @@ static int device_release(struct inode *inode, struct file *file)
         return 0;
 }
 
-
+/*module read function*/
 static ssize_t device_read( struct file *filp, char *buffer, size_t length, loff_t * offset)
 {
         static int fin = 0;
@@ -152,6 +153,7 @@ static ssize_t device_read( struct file *filp, char *buffer, size_t length, loff
         return i;
 }
 
+/*module write function*/
 static ssize_t device_write(struct file *filp, const char *buff, size_t len, loff_t * off)
 {
         static int fin = 0;
