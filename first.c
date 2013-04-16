@@ -77,5 +77,15 @@ static int device_open(struct inode *inode, struct file *file)
 }
 
 
+static int device_release(struct inode *inode, struct file *file)
+{
+        device_opened--;
+
+        module_put(THIS_MODULE);
+
+        return 0;
+}
+
+
 module_init(calc_init); /* Register module entry point */
 module_exit(calc_exit); /* Register module cleaning up */
