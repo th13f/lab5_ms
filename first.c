@@ -152,6 +152,49 @@ static ssize_t device_read( struct file *filp, char *buffer, size_t length, loff
         return i;
 }
 
+static ssize_t device_write(struct file *filp, const char *buff, size_t len, loff_t * off)
+{
+        static int fin = 0;
+        char name[32];
+        int buf_size = 0;
+        int index = 0;
+
+        if (fin) {
+                fin = 0;
+                return 0;
+        }
+
+        strcpy(name, filp->f_dentry->d_name.name);
+
+        if (strcmp(name, CALC_FIRST) == 0) {
+                index = 0;
+        } else if (strcmp(name, CALC_SECOND) == 0) {
+                index = 1;
+        } else if (strcmp(name, CALC_OPERAND) == 0) {
+                index = 2;
+        } else {
+                index = 3;
+        }
+
+        if (len >= FILE_MAX_SIZE) {
+                buf_size = FILE_MAX_SIZE - 1;
+        } else {
+                buf_size = len;
+        }
+
+        if (index != 3) {
+                if (copy_from_user(devices_buffer[index], buff, buf_size)) {
+                                printk(KERN_ERR "Failed to write to /dev/%s\n", names[index]);
+                                return -EFAULT;
+                }
+                devices_buffer[index][buf_size + 1] = '\0';
+        }
+
+        fin = 1;
+
+        return buf_size;
+}
+
 
 module_init(calc_init); /* Register module entry point */
 module_exit(calc_exit); /* Register module cleaning up */
